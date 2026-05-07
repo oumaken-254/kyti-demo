@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYTI - Kenya Youth Transition Initiative</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .kenyan-flag { background: linear-gradient(to bottom, #000 25%, #FFF 25%, #FFF 30%, #BB0000 30%, #BB0000 70%, #FFF 70%, #FFF 75%, #006600 75%); height: 10px; width: 100%; position: fixed; top: 0; z-index: 100; }
+        .flag-green { background-color: #006600; }
+        .flag-red { background-color: #BB0000; }
+        .text-flag-green { color: #006600; }
+        .text-flag-red { color: #BB0000; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-slate-900">
+    <div class="kenyan-flag"></div>
+
+    <div class="fixed top-6 right-6 z-[200] bg-black p-2 rounded-2xl shadow-2xl border border-white/20">
+        <p class="text-[8px] text-white/50 font-bold ml-2 mb-1 uppercase tracking-widest">Demo Navigator</p>
+        <select onchange="switchView(this.value)" class="bg-black text-white text-xs font-bold p-2 outline-none cursor-pointer rounded-lg border border-white/10">
+            <option value="login">1. Access Portal</option>
+            <option value="mobilizer">2. Mobilizer View</option>
+            <option value="subcounty">3. Sub-County (Alego Usonga)</option>
+            <option value="county">4. County (Siaya)</option>
+            <option value="national">5. National Oversight</option>
+        </select>
+    </div>
+
+    <section id="view-login" class="min-h-screen flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-200">
+            <div class="flag-green p-12 text-center text-white">
+                <h1 class="text-5xl font-black italic">KYTI</h1>
+                <p class="text-[10px] font-bold uppercase tracking-[0.3em] mt-2">National Access Portal</p>
+            </div>
+            <div class="p-10 space-y-4">
+                <select id="loginRole" class="w-full p-4 border rounded-2xl font-bold bg-slate-50 outline-none">
+                    <option value="national">National/Admin</option>
+                    <option value="county">County Coordinator</option>
+                    <option value="subcounty">Sub-County Lead</option>
+                    <option value="mobilizer">Mobilizer</option>
+                </select>
+                <input type="text" placeholder="Username" class="w-full p-4 border rounded-2xl outline-none focus:border-flag-green">
+                <input type="password" placeholder="Password" class="w-full p-4 border rounded-2xl outline-none focus:border-flag-green">
+                <button onclick="switchView(document.getElementById('loginRole').value)" class="w-full flag-green text-white p-4 rounded-2xl font-black uppercase shadow-lg hover:brightness-110 transition-all">Enter Portal</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-mobilizer" class="hidden pt-24 p-8 max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl text-center border">
+                <img src="https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?fit=crop&w=150" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-flag-green">
+                <h2 class="text-2xl font-black">Otieno Okello</h2>
+                <p class="text-[10px] font-black text-flag-green uppercase">Mobilizer | Central Ward</p>
+            </div>
+            <div class="md:col-span-2 space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-8 rounded-[2.5rem] shadow-lg border-b-8 border-black">
+                        <p class="text-xs uppercase text-slate-400 font-bold">Voters Checked</p>
+                        <p class="text-5xl font-black">156</p>
+                    </div>
+                    <div onclick="toggleModal('redList')" class="bg-white p-8 rounded-[2.5rem] shadow-lg border-b-8 border-flag-red text-flag-red cursor-pointer">
+                        <p class="text-xs uppercase italic font-bold">Unregistered (Red List)</p>
+                        <p class="text-5xl font-black">42</p>
+                    </div>
+                </div>
+                <div class="bg-slate-900 text-white p-8 rounded-[3rem] flex gap-4 items-center">
+                    <input type="number" placeholder="Enter ID Number" class="flex-1 p-4 rounded-2xl text-black font-bold outline-none">
+                    <button class="flag-red px-10 py-4 rounded-2xl font-black uppercase text-xs">Verify</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-subcounty" class="hidden pt-24 p-8 max-w-6xl mx-auto">
+        <header class="flex justify-between items-end mb-8">
+            <h2 class="text-4xl font-black uppercase tracking-tighter italic">Alego Usonga</h2>
+            <div class="flex gap-4">
+                <select class="p-3 border rounded-xl font-bold text-xs">
+                    <option>Filter by Ward: ALL</option>
+                    <option>Siaya Central</option><option>North Alego</option><option>South Alego</option>
+                    <option>West Alego</option><option>Central Alego</option><option>Usonga</option>
+                </select>
+            </div>
+        </header>
+        <div class="grid lg:grid-cols-3 gap-8">
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border">
+                <h3 class="font-black uppercase text-sm border-b pb-4 mb-4">Ward Mobilizer Performance</h3>
+                <div class="space-y-4">
+                    <div class="p-4 bg-slate-50 rounded-2xl flex justify-between border-l-4 border-flag-green"><p class="text-xs font-black">Otieno (Siaya Central)</p><p class="font-black text-flag-green">82%</p></div>
+                </div>
+            </div>
+            <div class="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-2xl border-t-[10px] border-black">
+                <h3 class="font-black uppercase mb-6">Log Meeting Intelligence</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <input type="date" class="p-4 bg-slate-50 rounded-xl text-xs font-bold outline-none border">
+                    <input type="text" placeholder="Meeting Venue" class="p-4 bg-slate-50 rounded-xl text-xs font-bold outline-none border">
+                    <input type="number" placeholder="Participants" class="p-4 bg-slate-50 rounded-xl text-xs font-bold outline-none border">
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-6">
+                    <div class="space-y-2"><p class="text-[10px] font-black text-flag-green uppercase">Success Stories</p><input type="text" placeholder="What's working?" class="w-full border-b p-2 text-sm outline-none"></div>
+                    <div class="space-y-2"><p class="text-[10px] font-black text-flag-red uppercase">Bottlenecks</p><input type="text" placeholder="What's failing?" class="w-full border-b p-2 text-sm outline-none"></div>
+                </div>
+                <button class="w-full bg-black text-white mt-10 py-5 rounded-2xl font-black uppercase shadow-lg hover:bg-slate-800">Submit Data</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-county" class="hidden pt-24 p-8 max-w-7xl mx-auto">
+        <div class="bg-black text-white p-12 rounded-[4rem] mb-10 flex justify-between items-center shadow-2xl">
+            <div>
+                <h2 class="text-5xl font-black uppercase italic tracking-tighter">Siaya County</h2>
+                <p class="text-flag-red font-bold text-xs mt-2 uppercase tracking-[0.2em]">65,000 Verified Target | <span class="text-white">Overall Performance: 68%</span></p>
+            </div>
+            <button class="bg-white text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-lg hover:bg-slate-100">Redistribute Targets</button>
+        </div>
+        <div class="bg-white rounded-[3rem] shadow-xl overflow-hidden border border-slate-200">
+            <table class="w-full text-left">
+                <thead class="bg-slate-900 text-white text-[10px] uppercase font-black">
+                    <tr><th class="p-6">Sub-County</th><th class="p-6">Target Redistribution</th><th class="p-6">Actual Verified</th><th class="p-6 text-right">Performance</th></tr>
+                </thead>
+                <tbody class="font-bold text-sm">
+                    <tr class="border-b"><td class="p-6 italic">Alego Usonga</td><td class="p-6"><input type="number" value="15000" class="w-24 border-b bg-slate-50 p-1 rounded"></td><td class="p-6">11,130</td><td class="p-6 text-right text-flag-green">74.2%</td></tr>
+                    <tr class="border-b"><td class="p-6 italic">Bondo</td><td class="p-6"><input type="number" value="12000" class="w-24 border-b bg-slate-50 p-1 rounded"></td><td class="p-6">9,600</td><td class="p-6 text-right text-flag-green">80.0%</td></tr>
+                    <tr class="border-b"><td class="p-6 italic">Gem</td><td class="p-6"><input type="number" value="10000" class="w-24 border-b bg-slate-50 p-1 rounded"></td><td class="p-6">6,500</td><td class="p-6 text-right text-flag-red">65.0%</td></tr>
+                    <tr class="border-b"><td class="p-6 italic">Rarieda</td><td class="p-6"><input type="number" value="10000" class="w-24 border-b bg-slate-50 p-1 rounded"></td><td class="p-6">7,800</td><td class="p-6 text-right text-flag-green">78.0%</td></tr>
+                    <tr class="border-b"><td class="p-6 italic">Ugenya</td><td class="p-6"><input type="number" value="10000" class="w-24 border-b bg-slate-50 p-1 rounded"></td><td class="p-6">5,200</td><td class="p-6 text-right text-flag-red">52.0%</td></tr>
+                    <tr class="border-b"><td class="p-6 italic">Ugunja</td><td class="p-6"><input type="number" value="8000" class="w-24 border-b bg-slate-50 p-1 rounded"></td><td class="p-6">4,000</td><td class="p-6 text-right text-flag-red">50.0%</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="view-national" class="hidden pt-24 p-8 max-w-7xl mx-auto">
+        <header class="bg-slate-900 text-white p-12 rounded-[4rem] flex flex-col md:flex-row justify-between items-center mb-10 shadow-2xl gap-6">
+            <div>
+                <h2 class="text-5xl font-black italic uppercase">National Oversight</h2>
+                <button onclick="alert('Exporting Payment Sheet to Excel...')" class="mt-4 bg-white text-black px-6 py-4 rounded-2xl font-black uppercase text-xs shadow-xl flex items-center gap-2 hover:bg-slate-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Export Payment Sheet (.xlsx)
+                </button>
+            </div>
+            <div class="flex flex-col gap-3">
+                <select class="bg-slate-800 text-white p-4 rounded-2xl font-bold border-none text-xs"><option>Performance Filter: ALL COUNTIES</option><option>Siaya</option><option>Nairobi</option><option>Mombasa</option></select>
+                <select class="bg-green-700 text-white p-4 rounded-2xl font-bold border-none text-xs"><option>Payment Status: ALL COUNTIES</option><option>Siaya Verified</option><option>Nakuru Verified</option></select>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-white p-8 rounded-[3rem] shadow-xl border-l-[12px] border-green-500 flex justify-between items-center">
+                <div><h3 class="font-black text-xl uppercase italic">M-Pesa Payout</h3><p class="text-xs font-bold text-slate-400">Direct B2C API Enabled</p></div>
+                <button class="bg-green-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-lg">Batch Pay</button>
+            </div>
+            <div class="bg-white p-8 rounded-[3rem] shadow-xl border-l-[12px] border-blue-500 flex justify-between items-center">
+                <div><h3 class="font-black text-xl uppercase italic">Bank Payout</h3><p class="text-xs font-bold text-slate-400">RTGS/EFT Enabled</p></div>
+                <button class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase shadow-lg">Batch Pay</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-[3rem] shadow-2xl overflow-hidden border">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-[10px] font-black uppercase">
+                    <tr><th class="p-6">County</th><th class="p-6">Target</th><th class="p-6">Verified</th><th class="p-6">Payable KES</th><th class="p-6 text-right">Status</th></tr>
+                </thead>
+                <tbody class="text-sm font-bold">
+                    <tr class="border-b"><td class="p-6">SIAYA</td><td class="p-6">65,000</td><td class="p-6">44,230</td><td class="p-6">2.2M</td><td class="p-6 text-right text-flag-green uppercase">Verified</td></tr>
+                    <tr class="border-b"><td class="p-6">NAIROBI</td><td class="p-6">120,000</td><td class="p-6">95,000</td><td class="p-6">4.7M</td><td class="p-6 text-right text-flag-green uppercase">Verified</td></tr>
+                    <tr class="border-b"><td class="p-6">NAKURU</td><td class="p-6">100,000</td><td class="p-6">82,000</td><td class="p-6">4.1M</td><td class="p-6 text-right text-flag-green uppercase">Verified</td></tr>
+                    <tr class="border-b"><td class="p-6">MOMBASA</td><td class="p-6">90,000</td><td class="p-6">70,000</td><td class="p-6">3.5M</td><td class="p-6 text-right text-flag-green uppercase">Verified</td></tr>
+                    <tr class="border-b"><td class="p-6">KISUMU</td><td class="p-6">80,000</td><td class="p-6">62,000</td><td class="p-6">3.1M</td><td class="p-6 text-right text-flag-green uppercase">Verified</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div id="redList" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[300] p-6">
+        <div class="bg-white w-full max-w-lg rounded-[3rem] p-10 shadow-2xl">
+            <div class="flex justify-between items-center mb-8 border-b pb-4 text-flag-red"><h3 class="text-3xl font-black uppercase italic">Red List Audit</h3><button onclick="toggleModal('redList')" class="text-slate-400 font-black">CLOSE [X]</button></div>
+            <div class="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide"><div class="p-4 bg-slate-50 rounded-2xl flex justify-between border-l-8 border-flag-red font-black"><span>ID: 39228811</span><span class="text-xs text-slate-400 uppercase">Unregistered</span></div></div>
+        </div>
+    </div>
+
+    <script>
+        // Core View Switching Logic
+        function switchView(viewId) {
+            const views = ['view-login', 'view-mobilizer', 'view-subcounty', 'view-county', 'view-national'];
+            views.forEach(v => {
+                const element = document.getElementById(v);
+                if (element) {
+                    element.classList.add('hidden');
+                }
+            });
+            
+            const targetView = document.getElementById('view-' + viewId);
+            if (targetView) {
+                targetView.classList.remove('hidden');
+            }
+            window.scrollTo(0,0);
+        }
+
+        // Modal Logic
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
