@@ -1,126 +1,1128 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KYTI - Mobile Responsive Demo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .kenyan-flag { background: linear-gradient(to bottom, #000 25%, #FFF 25%, #FFF 30%, #BB0000 30%, #BB0000 70%, #FFF 70%, #FFF 75%, #006600 75%); height: 6px; width: 100%; position: fixed; top: 0; z-index: 100; }
-        .flag-green { background-color: #006600; }
-        .text-flag-green { color: #006600; }
-        .text-flag-red { color: #BB0000; }
-        /* Ensures tables don't break the layout on small screens */
-        .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .hidden { display: none !important; }
-    </style>
-</head>
-<body class="bg-slate-50 font-sans text-slate-900 overflow-x-hidden">
-    <div class="kenyan-flag"></div>
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-    <div class="fixed bottom-4 right-4 md:top-6 md:right-6 z-[200]">
-        <select onchange="switchView(this.value)" class="bg-black text-white text-sm font-bold p-4 rounded-2xl shadow-2xl border border-white/20 outline-none">
-            <option value="login">1. Access Portal</option>
-            <option value="mobilizer">2. Mobilizer View</option>
-            <option value="subcounty">3. Sub-County</option>
-            <option value="county">4. County (Siaya)</option>
-            <option value="national">5. National Oversight</option>
-        </select>
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  User, 
+  MapPin, 
+  BarChart3, 
+  ChevronRight, 
+  ShieldCheck, 
+  AlertCircle, 
+  LogOut,
+  Search,
+  Database,
+  Users,
+  Wallet,
+  Download
+} from 'lucide-react';
+import { UserRole, ViewState, CountyStats } from './types';
+
+// Mock Data
+const MOCK_COUNTIES: CountyStats[] = [
+  { name: 'SIAYA', verified: 44230, payoutStatus: 'PAID', payoutAmount: 22115000 },
+  { name: 'NAIROBI', verified: 95000, payoutStatus: 'WAIT', payoutAmount: 47500000 },
+  { name: 'MOMBASA', verified: 32000, payoutStatus: 'PROCESSING', payoutAmount: 16000000 },
+  { name: 'KISUMU', verified: 28400, payoutStatus: 'PAID', payoutAmount: 14200000 },
+];
+
+// Kenyan Counties Constants
+const KENYA_COUNTIES = [
+  { code: '001', name: 'Mombasa' }, { code: '002', name: 'Kwale' }, { code: '003', name: 'Kilifi' },
+  { code: '004', name: 'Tana River' }, { code: '005', name: 'Lamu' }, { code: '006', name: 'Taita Taveta' },
+  { code: '007', name: 'Garissa' }, { code: '008', name: 'Wajir' }, { code: '009', name: 'Mandera' },
+  { code: '010', name: 'Marsabit' }, { code: '011', name: 'Isiolo' }, { code: '012', name: 'Meru' },
+  { code: '013', name: 'Tharaka Nithi' }, { code: '014', name: 'Embu' }, { code: '015', name: 'Kitui' },
+  { code: '016', name: 'Machakos' }, { code: '017', name: 'Makueni' }, { code: '018', name: 'Nyandarua' },
+  { code: '019', name: 'Nyeri' }, { code: '020', name: 'Kirinyaga' }, { code: '021', name: "Murang'a" },
+  { code: '022', name: 'Kiambu' }, { code: '023', name: 'Turkana' }, { code: '024', name: 'West Pokot' },
+  { code: '025', name: 'Samburu' }, { code: '026', name: 'Trans Nzoia' }, { code: '027', name: 'Uasin Gishu' },
+  { code: '028', name: 'Elgeyo/Marakwet' }, { code: '029', name: 'Nandi' }, { code: '030', name: 'Baringo' },
+  { code: '031', name: 'Laikipia' }, { code: '032', name: 'Nakuru' }, { code: '033', name: 'Narok' },
+  { code: '034', name: 'Kajiado' }, { code: '035', name: 'Kericho' }, { code: '036', name: 'Bomet' },
+  { code: '037', name: 'Kakamega' }, { code: '038', name: 'Vihiga' }, { code: '039', name: 'Bungoma' },
+  { code: '040', name: 'Busia' }, { code: '041', name: 'Siaya' }, { code: '042', name: 'Kisumu' },
+  { code: '043', name: 'Homa Bay' }, { code: '044', name: 'Migori' }, { code: '045', name: 'Kisii' },
+  { code: '046', name: 'Nyamira' }, { code: '047', name: 'Nairobi' }
+];
+
+export default function App() {
+  const [view, setView] = useState<ViewState>('login');
+  const [showRegister, setShowRegister] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState('');
+
+  // Global State for Targets
+  const [globalTarget, setGlobalTarget] = useState(1000000);
+  const [countyTargets, setCountyTargets] = useState<Record<string, number>>(
+    KENYA_COUNTIES.reduce((acc, c) => ({ ...acc, [c.name]: c.name === 'Siaya' ? 65000 : 10000 }), {})
+  );
+
+  const handleSignIn = (role: UserRole) => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setView(role);
+      setIsLoading(false);
+    }, 800);
+  };
+
+  const handleLogout = () => {
+    setView('login');
+    setShowRegister(false);
+    setUserId('');
+  };
+
+  return (
+    <div className="min-h-screen relative font-sans bg-slate-50">
+      <div className="kenyan-accent fixed top-0 left-0 z-[100]" />
+      
+      {/* Demo Controller - Bottom Right */}
+      <div className="fixed bottom-6 right-6 z-[200] group">
+        <div className="bg-kenya-black p-1 rounded-2xl shadow-2xl border border-white/10 overflow-hidden transform transition-all group-hover:scale-105">
+          <div className="px-4 py-2 border-b border-white/5 bg-white/5">
+            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest text-center">Demo Controller</p>
+          </div>
+          <select 
+            value={view}
+            onChange={(e) => {
+              setView(e.target.value as ViewState);
+              setShowRegister(false);
+            }}
+            className="w-48 bg-transparent text-white text-xs font-bold p-3 outline-none cursor-pointer appearance-none text-center"
+          >
+            <option value="login" className="bg-kenya-black">1. Access Portal (Login)</option>
+            <option value="mobilizer" className="bg-kenya-black">2. Mobilizer View</option>
+            <option value="subcounty" className="bg-kenya-black">3. Sub-County (Alego)</option>
+            <option value="county" className="bg-kenya-black">4. County (Siaya)</option>
+            <option value="national" className="bg-kenya-black">5. National Oversight</option>
+          </select>
+        </div>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {view === 'login' && !showRegister && (
+          <LoginView 
+            key="login" 
+            onSignIn={handleSignIn} 
+            onRegisterClick={() => setShowRegister(true)}
+            isLoading={isLoading} 
+          />
+        )}
+
+        {showRegister && view === 'login' && (
+          <RegisterView 
+            key="register" 
+            onBack={() => setShowRegister(false)}
+            onSuccess={() => setShowRegister(false)}
+          />
+        )}
+        
+        {view === UserRole.MOBILIZER && (
+          <MobilizerView key="mobilizer" onLogout={handleLogout} />
+        )}
+
+        {view === UserRole.SUB_COUNTY && (
+          <SubCountyView key="subcounty" onLogout={handleLogout} />
+        )}
+
+        {view === UserRole.COUNTY && (
+          <CountyView 
+            key="county" 
+            onLogout={handleLogout} 
+            assignedTarget={countyTargets['Siaya'] || 0}
+          />
+        )}
+
+        {view === UserRole.NATIONAL && (
+          <NationalView 
+            key="national" 
+            onLogout={handleLogout} 
+            globalTarget={globalTarget}
+            setGlobalTarget={setGlobalTarget}
+            countyTargets={countyTargets}
+            setCountyTargets={setCountyTargets}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
 
-    <section id="view-login" class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-[2rem] shadow-xl overflow-hidden border">
-            <div class="flag-green p-8 text-center text-white">
-                <h1 class="text-4xl font-black italic">KYTI</h1>
-                <p class="text-[10px] font-bold uppercase tracking-widest mt-1">Access Portal</p>
-            </div>
-            <div class="p-6 space-y-4">
-                <select id="loginRole" class="w-full p-4 border rounded-xl font-bold text-sm bg-slate-50">
-                    <option value="mobilizer">Community Mobilizer</option>
-                    <option value="national">National Admin</option>
-                </select>
-                <input type="text" placeholder="ID Number / Username" class="w-full p-4 border rounded-xl text-base outline-none focus:border-green-600">
-                <input type="password" placeholder="Password" class="w-full p-4 border rounded-xl text-base outline-none focus:border-green-600">
-                <button onclick="switchView(document.getElementById('loginRole').value)" class="w-full flag-green text-white p-4 rounded-xl font-black uppercase text-sm shadow-lg">Sign In</button>
-            </div>
-        </div>
-    </section>
+// --- VIEWS ---
 
-    <section id="view-mobilizer" class="hidden pt-16 p-4 max-w-md mx-auto space-y-4">
-        <div class="bg-white p-6 rounded-3xl shadow-md border text-center">
-            <div class="w-20 h-20 bg-slate-200 rounded-full mx-auto mb-3 border-2 border-flag-green"></div>
-            <h2 class="text-xl font-black">Otieno Okello</h2>
-            <p class="text-xs font-bold text-flag-green uppercase">Central Ward, Siaya</p>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-            <div class="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-black text-center">
-                <p class="text-[10px] uppercase font-bold text-slate-400">Checked</p>
-                <p class="text-3xl font-black">156</p>
-            </div>
-            <div onclick="toggleModal('redList')" class="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-red-600 text-center">
-                <p class="text-[10px] uppercase font-bold text-red-400">Red List</p>
-                <p class="text-3xl font-black text-red-600">42</p>
-            </div>
-        </div>
-        <div class="bg-slate-900 p-6 rounded-[2rem] shadow-lg">
-            <p class="text-white text-[10px] font-bold uppercase mb-3 opacity-60">Voter Verification</p>
-            <input type="number" placeholder="Enter ID Number" class="w-full p-4 rounded-xl mb-3 text-lg font-bold">
-            <button class="w-full bg-red-600 text-white p-4 rounded-xl font-black uppercase text-sm">Verify ID</button>
-        </div>
-    </section>
+function LoginView({ onSignIn, onRegisterClick, isLoading }: any) {
+  const [role, setRole] = useState<UserRole>(UserRole.MOBILIZER);
 
-    <section id="view-national" class="hidden pt-16 p-4 max-w-4xl mx-auto">
-        <div class="bg-black text-white p-6 rounded-[2rem] mb-6">
-            <h2 class="text-2xl font-black italic uppercase">National Oversight</h2>
-            <div class="flex flex-wrap gap-2 mt-4">
-                <button onclick="alert('Downloading...')" class="flex-1 bg-white text-black text-[10px] font-black p-3 rounded-lg uppercase">Export Excel</button>
-                <button class="flex-1 bg-green-600 text-white text-[10px] font-black p-3 rounded-lg uppercase">Bulk M-Pesa</button>
+  return (
+    <motion.section 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="min-h-screen flex items-center justify-center p-4 bg-slate-100/30"
+    >
+      <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden border border-slate-200/50">
+        <div className="bg-kenya-green p-12 text-center text-white relative">
+          <motion.h1 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-5xl font-black italic tracking-tighter"
+          >
+            KYTI
+          </motion.h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] mt-2 opacity-90">
+            Access Portal
+          </p>
+        </div>
+        <div className="p-10 space-y-6">
+          <select 
+            value={role}
+            onChange={(e) => setRole(e.target.value as UserRole)}
+            className="w-full p-5 border border-slate-100 rounded-2xl font-bold text-sm bg-slate-50/50 outline-none focus:ring-2 focus:ring-kenya-green/10"
+          >
+            <option value={UserRole.MOBILIZER}>Community Mobilizer</option>
+            <option value={UserRole.SUB_COUNTY}>Sub-County Admin</option>
+            <option value={UserRole.COUNTY}>County Admin</option>
+            <option value={UserRole.NATIONAL}>National Oversight</option>
+          </select>
+          
+          <div className="space-y-3">
+            <input 
+              type="text" 
+              placeholder="ID Number / Username" 
+              className="w-full p-5 border border-slate-100 rounded-2xl text-base outline-none focus:border-kenya-green/30 bg-slate-50/30 font-medium"
+            />
+            <input 
+              type="password" 
+              placeholder="Password" 
+              className="w-full p-5 border border-slate-100 rounded-2xl text-base outline-none focus:border-kenya-green/30 bg-slate-50/30 font-medium"
+            />
+          </div>
+
+          <button 
+            onClick={() => onSignIn(role)}
+            disabled={isLoading}
+            className="w-full bg-kenya-green hover:bg-emerald-900 text-white p-5 rounded-2xl font-black uppercase text-sm shadow-xl shadow-kenya-green/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              "Sign In"
+            )}
+          </button>
+
+          <div className="text-center">
+            <p className="text-xs text-slate-400 font-bold">
+              New Mobilizer?{' '}
+              <button 
+                onClick={onRegisterClick}
+                className="text-kenya-green underline hover:text-emerald-800 transition-colors"
+              >
+                Register Here
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+function RegisterView({ onBack, onSuccess }: any) {
+  const [formData, setFormData] = useState({
+    name: '',
+    idNumber: '',
+    phone: '',
+    county: '',
+    subCounty: '',
+    ward: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate registration
+    onSuccess();
+  };
+
+  return (
+    <motion.section 
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="min-h-screen flex items-center justify-center p-4 bg-slate-100/30"
+    >
+      <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden border">
+        <div className="bg-kenya-black p-8 text-white">
+          <button onClick={onBack} className="text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 mb-4 flex items-center gap-2">
+            ← Back to Login
+          </button>
+          <h2 className="text-3xl font-black italic tracking-tighter">MOBILIZER RECRUITMENT</h2>
+          <p className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-60">System Enrollment</p>
+        </div>
+        <form onSubmit={handleSubmit} className="p-8 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase font-bold text-slate-400 ml-1">Full Name (as per ID)</label>
+              <input 
+                required
+                className="w-full p-4 border border-slate-100 rounded-2xl text-sm font-bold bg-slate-50/50"
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+              />
             </div>
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase font-bold text-slate-400 ml-1">National ID Number</label>
+              <input 
+                required
+                className="w-full p-4 border border-slate-100 rounded-2xl text-sm font-bold bg-slate-50/50"
+                value={formData.idNumber}
+                onChange={e => setFormData({...formData, idNumber: e.target.value})}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase font-bold text-slate-400 ml-1">Phone Number</label>
+              <input 
+                required
+                className="w-full p-4 border border-slate-100 rounded-2xl text-sm font-bold bg-slate-50/50"
+                value={formData.phone}
+                onChange={e => setFormData({...formData, phone: e.target.value})}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase font-bold text-slate-400 ml-1">County</label>
+              <input 
+                required
+                className="w-full p-4 border border-slate-100 rounded-2xl text-sm font-bold bg-slate-50/50"
+                value={formData.county}
+                onChange={e => setFormData({...formData, county: e.target.value})}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase font-bold text-slate-400 ml-1">Sub-County</label>
+              <input 
+                required
+                className="w-full p-4 border border-slate-100 rounded-2xl text-sm font-bold bg-slate-50/50"
+                value={formData.subCounty}
+                onChange={e => setFormData({...formData, subCounty: e.target.value})}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] uppercase font-bold text-slate-400 ml-1">Ward</label>
+              <input 
+                required
+                className="w-full p-4 border border-slate-100 rounded-2xl text-sm font-bold bg-slate-50/50"
+                value={formData.ward}
+                onChange={e => setFormData({...formData, ward: e.target.value})}
+              />
+            </div>
+          </div>
+          <button 
+            type="submit"
+            className="w-full bg-kenya-red text-white p-5 rounded-2xl font-black uppercase text-sm shadow-xl shadow-kenya-red/20 mt-4 h-16 flex items-center justify-center transition-transform active:scale-[0.98]"
+          >
+            Submit for Approval
+          </button>
+        </form>
+      </div>
+    </motion.section>
+  );
+}
+
+function MobilizerView({ onLogout }: any) {
+  const [feedFilter, setFeedFilter] = useState<'all' | 'verified' | 'unregistered'>('all');
+  
+  const stats = [
+    { label: 'ID CHECK', value: '156', border: 'kenya-green', text: 'kenya-green' },
+    { label: 'IEBC (Not Registered)', value: '42', border: 'kenya-red', text: 'kenya-red' },
+  ];
+
+  const voters = [
+    { id: '29188412', status: 'verified', time: '2:41 PM' },
+    { id: '28144210', status: 'unregistered', time: '2:45 PM' },
+    { id: '29884522', status: 'verified', time: '2:50 PM' },
+  ];
+
+  const filteredVoters = voters.filter(v => {
+    if (feedFilter === 'all') return true;
+    return v.status === feedFilter;
+  });
+
+  return (
+    <motion.section 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="pt-16 pb-8 px-4 max-w-md mx-auto space-y-6"
+    >
+      <header className="flex justify-between items-start">
+        <div className="bg-white p-5 rounded-[2.5rem] glass-card border-slate-100 border flex items-center gap-4 flex-1 mr-4">
+          <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center border-2 border-kenya-green p-1 overflow-hidden shadow-inner">
+            <img 
+              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Otieno" 
+              alt="Profile" 
+              className="w-full h-full rounded-full"
+            />
+          </div>
+          <div>
+            <h2 className="text-lg font-black tracking-tight text-slate-900">Otieno Okello</h2>
+            <p className="text-[10px] font-bold text-kenya-green uppercase tracking-wider">Central Ward, Siaya</p>
+          </div>
+        </div>
+        <button 
+          onClick={onLogout}
+          className="bg-white p-5 rounded-3xl border border-slate-100 text-slate-300 hover:text-kenya-red transition-all shadow-sm flex items-center justify-center"
+        >
+          <LogOut size={20} />
+        </button>
+      </header>
+
+      <div className="grid grid-cols-2 gap-4">
+        {stats.map((s, idx) => (
+          <motion.div 
+            key={s.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className={`bg-white p-6 rounded-[2rem] border-b-4 border-${s.border} text-center shadow-lg border-slate-100 border-x border-t`}
+          >
+            <p className={`text-[10px] uppercase font-bold text-slate-400 mb-1`}>{s.label}</p>
+            <p className={`text-4xl font-black text-${s.text}`}>{s.value}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="bg-kenya-black p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        <div className="bg-white/5 absolute inset-0 backdrop-blur-[2px]" />
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldCheck size={14} className="text-kenya-green" />
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Voter Verification</p>
+          </div>
+          <input 
+            type="number" 
+            placeholder="Enter ID Number" 
+            className="w-full p-5 rounded-2xl text-xl font-black bg-white outline-none focus:ring-4 focus:ring-kenya-green/20 transition-all shadow-inner"
+          />
+          <button className="w-full bg-kenya-red hover:bg-red-800 text-white p-5 rounded-2xl font-black uppercase text-sm shadow-xl shadow-kenya-red/30 transition-all active:scale-[0.98]">
+            Verify ID
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex justify-between items-center px-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Verification Feed</p>
+          <select 
+            value={feedFilter}
+            onChange={(e) => setFeedFilter(e.target.value as any)}
+            className="text-[10px] font-black uppercase tracking-widest text-kenya-green bg-transparent outline-none cursor-pointer"
+          >
+            <option value="all">Filter: ALL</option>
+            <option value="verified">Verified</option>
+            <option value="unregistered">Not Registered</option>
+          </select>
+        </div>
+        
+        <AnimatePresence mode="popLayout">
+          {filteredVoters.map((v) => (
+            <motion.div 
+              key={v.id}
+              layout
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              className="bg-white p-4 rounded-3xl border border-slate-50 flex items-center justify-between shadow-sm"
+            >
+              <div className="flex items-center gap-3 text-slate-600">
+                <ShieldCheck size={18} className={v.status === 'verified' ? 'text-kenya-green' : 'text-kenya-red'} />
+                <div>
+                  <p className="text-sm font-bold tracking-tight text-slate-900">{v.id}</p>
+                  <p className="text-[10px] text-slate-400 font-medium tracking-tight">
+                    Status: {v.status === 'verified' ? 'Verified Sync' : 'IEBC Match Fail'}
+                  </p>
+                </div>
+              </div>
+              <p className="text-[9px] font-black text-slate-300">{v.time}</p>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </motion.section>
+  );
+}
+
+function SubCountyView({ onLogout }: any) {
+  const wards = [
+    'All Wards',
+    'Siaya Central',
+    'Siaya North',
+    'Siaya West',
+    'Boro',
+    'North Alego',
+    'South East Alego'
+  ];
+  const [selectedWard, setSelectedWard] = useState(wards[0]);
+  const [showLogForm, setShowLogForm] = useState(false);
+
+  const mobilizers = [
+    { name: 'Otieno Okello', ward: 'Siaya Central', progress: 410, target: 500, percent: 82 },
+    { name: 'Jane Anyango', ward: 'Boro', progress: 225, target: 500, percent: 45 },
+    { name: 'David Omondi', ward: 'Siaya North', progress: 475, target: 500, percent: 95 },
+    { name: 'Grace Achieng', ward: 'Siaya West', progress: 320, target: 500, percent: 64 },
+    { name: 'Peter Odhiambo', ward: 'North Alego', progress: 150, target: 500, percent: 30 },
+  ];
+
+  const filteredMobilizers = selectedWard === 'All Wards' 
+    ? mobilizers 
+    : mobilizers.filter(m => m.ward === selectedWard);
+
+  const wardPerformance = filteredMobilizers.length > 0 
+    ? Math.round(filteredMobilizers.reduce((acc, current) => acc + current.percent, 0) / filteredMobilizers.length)
+    : 0;
+
+  return (
+    <motion.section 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="pt-16 pb-12 px-6 max-w-6xl mx-auto"
+    >
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+        <div>
+          <h2 className="text-4xl font-black text-kenya-green tracking-tighter uppercase italic">Alego Usonga Sub-county</h2>
+          <div className="flex items-center gap-4 mt-2">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Target Assigned: <span className="text-slate-900">15,000</span></p>
+            <div className="h-4 w-[1px] bg-slate-200" />
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] font-black text-kenya-green uppercase">Filter View:</p>
+              <select 
+                value={selectedWard}
+                onChange={(e) => setSelectedWard(e.target.value)}
+                className="text-[10px] font-black uppercase text-slate-900 bg-white border border-slate-200 px-3 py-1 rounded-full outline-none"
+              >
+                {wards.map(w => <option key={w} value={w}>{w}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] font-black text-kenya-green uppercase tracking-widest mb-1">
+            {selectedWard === 'All Wards' ? 'Alego Usonga Total Performance' : `Ward Performance (${selectedWard})`}
+          </p>
+          <p className="text-5xl font-black text-kenya-green">{filteredMobilizers.length > 0 ? wardPerformance : 'N/A'}%</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Active Mobilizers */}
+        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl overflow-hidden self-start">
+          <div className="p-8 border-b border-slate-50 bg-slate-50/50">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+              <Users size={14} /> Active Mobilizers ({selectedWard})
+            </h3>
+          </div>
+          <div className="p-6 space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
+            {filteredMobilizers.length > 0 ? filteredMobilizers.map((m) => (
+              <div key={m.name} className="bg-slate-50/50 p-5 rounded-3xl border border-slate-100/50 group hover:border-kenya-green/30 transition-all">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="text-sm font-black text-slate-900 leading-tight">{m.name}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">{m.ward}</p>
+                  </div>
+                  <p className="text-xs font-black text-slate-900">{m.progress}/{m.target}</p>
+                </div>
+                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${m.percent}%` }}
+                    className={`h-full ${m.percent > 90 ? 'bg-kenya-green' : m.percent > 60 ? 'bg-slate-900' : 'bg-kenya-red'}`}
+                  />
+                </div>
+              </div>
+            )) : (
+              <div className="text-center py-8">
+                <p className="text-xs font-bold text-slate-300 uppercase">No active mobilizers logged</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Verified</p>
-                <p class="text-xl font-black text-flag-green">48,290</p>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Payout Due</p>
-                <p class="text-xl font-black text-red-600">24.1M</p>
-            </div>
-        </div>
+        {/* Qualitative Section / Form */}
+        <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl overflow-hidden">
+          <div className="p-8 border-b border-slate-50 bg-kenya-green grainy-bg text-white flex justify-between items-center">
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-60">
+              {showLogForm ? 'Capture Intelligence Log' : `Intelligence Feed: ${selectedWard}`}
+            </h3>
+            <button 
+              onClick={() => setShowLogForm(!showLogForm)}
+              className="text-[10px] font-black uppercase bg-white/20 px-4 py-2 rounded-full hover:bg-white/30 transition-all"
+            >
+              {showLogForm ? 'Cancel Log' : 'Update Log'}
+            </button>
+          </div>
 
-        <div class="table-container bg-white rounded-2xl shadow-md border">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-100 text-[10px] font-black uppercase text-slate-500">
-                    <tr>
-                        <th class="p-4 whitespace-nowrap">County</th>
-                        <th class="p-4 whitespace-nowrap text-right">Verified</th>
-                        <th class="p-4 whitespace-nowrap text-right">Status</th>
-                    </tr>
+          <div className="p-8 transition-all">
+            {showLogForm ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Meeting Date</label>
+                    <input type="date" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm outline-none" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Ward</label>
+                    <select className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm outline-none">
+                      {wards.filter(w => w !== 'All Wards').map(w => <option key={w}>{w}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Venue</label>
+                    <input type="text" placeholder="Community Hall / Village Hall" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm outline-none" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Number of Participants</label>
+                    <input type="number" placeholder="Actual Attendance" className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-sm outline-none" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-kenya-green uppercase tracking-widest">Top 2 Positive Insights</p>
+                    <input placeholder="Success 1" className="w-full p-4 bg-emerald-50/30 border border-emerald-100 rounded-2xl font-medium text-sm outline-none" />
+                    <input placeholder="Success 2" className="w-full p-4 bg-emerald-50/30 border border-emerald-100 rounded-2xl font-medium text-sm outline-none" />
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-kenya-red uppercase tracking-widest">Top 2 Challenges / Negatives</p>
+                    <input placeholder="Challenge 1" className="w-full p-4 bg-red-50/30 border border-red-100 rounded-2xl font-medium text-sm outline-none" />
+                    <input placeholder="Challenge 2" className="w-full p-4 bg-red-50/30 border border-red-100 rounded-2xl font-medium text-sm outline-none" />
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setShowLogForm(false)}
+                  className="w-full bg-kenya-green text-white p-6 rounded-3xl font-black uppercase text-sm tracking-widest hover:bg-emerald-900 transition-all shadow-xl"
+                >
+                  Confirm & Sync Intelligence
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="bg-emerald-50 p-6 rounded-[2rem] border border-emerald-100/50 space-y-3">
+                    <p className="text-[10px] font-black text-kenya-green uppercase tracking-widest underline underline-offset-4 decoration-2">Top Positives</p>
+                    <ul className="text-xs font-bold space-y-2 text-slate-700">
+                      <li>• Door-to-door efficiency high</li>
+                      <li>• Church leadership support active in {selectedWard}</li>
+                      <li>• Youth engagement successful</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="bg-red-50 p-6 rounded-[2rem] border border-red-100/50 space-y-3">
+                    <p className="text-[10px] font-black text-kenya-red uppercase tracking-widest underline underline-offset-4 decoration-2">Priority Challenges</p>
+                    <ul className="text-xs font-bold space-y-2 text-slate-700">
+                      <li>• Network instability clusters detected</li>
+                      <li>• ID card replacement delays</li>
+                      <li>• Transport logistics (Motorbike fuel)</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="md:col-span-2 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 text-center">
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Qualitative Intelligence Summary</p>
+                   <p className="text-sm font-bold text-slate-700">Latest Log: May 8, 2026 • 24 Participants • Central Siaya Primary School</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+function CountyView({ onLogout, assignedTarget }: any) {
+  const [showCountyReport, setShowCountyReport] = useState(false);
+  const [showTargetManager, setShowTargetManager] = useState(false);
+  
+  const initialSubCounties = [
+    { name: 'Alego Usonga', target: 15000, verified: 11130, unregistered: 1200, payout: 5565000, percent: 74.2 },
+    { name: 'Bondo', target: 12000, verified: 9600, unregistered: 800, payout: 4800000, percent: 80.0 },
+    { name: 'Gem', target: 10000, verified: 6500, unregistered: 1500, payout: 3250000, percent: 65.0 },
+    { name: 'Rarieda', target: 10000, verified: 7800, unregistered: 600, payout: 3900000, percent: 78.0 },
+    { name: 'Ugenya', target: 10000, verified: 5200, unregistered: 2100, payout: 2600000, percent: 52.0 },
+    { name: 'Ugunja', target: 8000, verified: 4000, unregistered: 1000, payout: 2000000, percent: 50.0 },
+  ];
+
+  const [subCounties, setSubCounties] = useState(initialSubCounties);
+
+  const handleSubTargetChange = (name: string, val: string) => {
+    const num = parseInt(val) || 0;
+    setSubCounties(prev => prev.map(sc => sc.name === name ? { ...sc, target: num } : sc));
+  };
+
+  const currentTotalAssigned = subCounties.reduce((a, b) => a + b.target, 0);
+
+  const totals = {
+    target: assignedTarget || 65000,
+    verified: subCounties.reduce((a, b) => a + b.verified, 0),
+    unregistered: subCounties.reduce((a, b) => a + b.unregistered, 0),
+    payout: subCounties.reduce((a, b) => a + b.payout, 0),
+  };
+
+  return (
+    <motion.section 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="pt-16 pb-12 px-6 max-w-6xl mx-auto space-y-8"
+    >
+      <header className="creative-header p-12 rounded-[3.5rem] shadow-2xl flex flex-col md:flex-row justify-between items-center relative overflow-hidden group border border-white/5 grainy-bg">
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-3">
+             <div className="w-2 h-2 rounded-full bg-kenya-red animate-pulse" />
+             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">SIAYA COUNTY COMMAND CENTER</p>
+          </div>
+          <h2 className="text-5xl font-black text-white italic tracking-tighter uppercase leading-none">Siaya County</h2>
+          <p className="text-xs font-bold text-white/50 mt-4 max-w-md">Aggregated real-time oversight across all sub-county units. Global data sets verified via IEBC synchronization protocols.</p>
+        </div>
+        <div className="flex gap-3 mt-6 md:mt-0">
+          <button 
+            onClick={() => {
+              setShowCountyReport(!showCountyReport);
+              setShowTargetManager(false);
+            }}
+            className="bg-white/10 backdrop-blur-md text-white text-[10px] font-black px-8 py-5 rounded-3xl uppercase tracking-widest border border-white/10 hover:bg-white/20 transition-all"
+          >
+            {showCountyReport ? 'Back to Dashboard' : 'County Report'}
+          </button>
+          <button 
+            onClick={() => {
+              setShowTargetManager(!showTargetManager);
+              setShowCountyReport(false);
+            }}
+            className="bg-kenya-green text-white text-[10px] font-black px-8 py-5 rounded-3xl uppercase tracking-widest shadow-xl shadow-kenya-green/20 hover:scale-105 transition-all"
+          >
+            {showTargetManager ? 'Cancel Update' : 'Update Target'}
+          </button>
+        </div>
+      </header>
+
+      {showTargetManager ? (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-[3rem] p-10 shadow-2xl border border-slate-100 space-y-8"
+        >
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-slate-100 pb-8">
+            <div>
+              <h3 className="text-2xl font-black text-slate-900 italic uppercase">Sub-County Target Audit</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Adjust sub-county targets. Total must match National Assignment</p>
+            </div>
+            <div className="bg-kenya-green p-6 rounded-3xl text-white min-w-[250px] shadow-xl">
+              <p className="text-[9px] font-black text-white/60 uppercase mb-2">National Allotment</p>
+              <p className="text-3xl font-black tracking-tighter">{(totals.target).toLocaleString()}</p>
+              <div className="mt-4 pt-4 border-t border-white/20 flex justify-between items-end">
+                <div>
+                  <p className="text-[8px] font-black text-white/60 uppercase">Sum of Wards</p>
+                  <p className="text-sm font-bold">{currentTotalAssigned.toLocaleString()}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[8px] font-black text-white/60 uppercase">Variance</p>
+                  <p className={`text-sm font-bold ${currentTotalAssigned !== totals.target ? 'text-kenya-red' : 'text-white'}`}>
+                    {(totals.target - currentTotalAssigned).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {subCounties.map(sc => (
+              <div key={sc.name} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex items-center justify-between group hover:border-kenya-green/30 transition-all">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Sub-County</p>
+                  <p className="text-sm font-black text-slate-900 italic">{sc.name}</p>
+                </div>
+                <div className="text-right">
+                  <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Target Voters</label>
+                  <input 
+                    type="number"
+                    value={sc.target}
+                    onChange={(e) => handleSubTargetChange(sc.name, e.target.value)}
+                    className="w-28 bg-white border border-slate-200 rounded-xl py-2 px-3 text-right text-sm font-mono font-bold outline-none focus:border-kenya-green"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-center pt-4">
+            <button 
+              disabled={currentTotalAssigned !== totals.target}
+              onClick={() => setShowTargetManager(false)}
+              className={`px-12 py-5 rounded-[2rem] font-black uppercase text-xs tracking-widest transition-all ${currentTotalAssigned === totals.target ? 'bg-slate-900 text-white hover:scale-105 shadow-2xl' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
+            >
+              Commit & Update Hub
+            </button>
+          </div>
+        </motion.div>
+      ) : showCountyReport ? (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-[3rem] p-10 shadow-2xl border border-slate-100 space-y-8"
+        >
+          <div className="flex justify-between items-center border-b border-slate-100 pb-6">
+            <div>
+              <h3 className="text-2xl font-black text-slate-900 italic uppercase">County Qualitative Intelligence Report</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aggregated from 6 Sub-Counties • Generated May 8, 2026</p>
+            </div>
+            <button className="bg-slate-100 p-4 rounded-2xl hover:bg-slate-200 transition-all">
+              <Download size={20} className="text-slate-600" />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {subCounties.slice(0, 3).map(sc => (
+              <div key={sc.name} className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-4 bg-kenya-green rounded-full" />
+                  <h4 className="text-sm font-black text-slate-900 uppercase">{sc.name} Intel</h4>
+                </div>
+                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
+                  <div>
+                    <p className="text-[9px] font-black text-kenya-green uppercase mb-2">Positives</p>
+                    <p className="text-xs font-bold text-slate-600">High engagement in rural markets. Community leaders across {sc.name} are fully onboarded.</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-kenya-red uppercase mb-2">Challenges</p>
+                    <p className="text-xs font-bold text-slate-600">ID replacement logistics remain a bottleneck for roughly 12% of the targeted youth demographic.</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      ) : (
+        <>
+          {/* Summary Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { label: 'Total Target', value: totals.target.toLocaleString(), color: 'slate-900' },
+              { label: 'Total Verified', value: totals.verified.toLocaleString(), color: 'kenya-green' },
+              { label: 'Total Not Registered', value: totals.unregistered.toLocaleString(), color: 'kenya-red' },
+              { label: 'Total Payout Due', value: `KES ${(totals.payout / 1000000).toFixed(1)}M`, color: 'slate-900' },
+            ].map((s, idx) => (
+              <motion.div 
+                key={s.label}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.1 }}
+                className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl text-center group hover:bg-slate-50 transition-colors"
+              >
+                <p className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">{s.label}</p>
+                <p className={`text-3xl font-black text-${s.color} tracking-tighter`}>{s.value}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
+            <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 flex items-center gap-2 italic">
+                <BarChart3 size={16} /> Sub-County Performance Audit
+              </h3>
+              <div className="flex gap-2">
+                <button className="bg-slate-50 text-[10px] font-black px-6 py-3 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-all">
+                  Export Audit (.XLS)
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto p-4">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50 text-[10px] font-black uppercase text-slate-300">
+                  <tr>
+                    <th className="p-6">Registry Unit</th>
+                    <th className="p-6 text-right">Target</th>
+                    <th className="p-6 text-right text-kenya-green font-black">Verified</th>
+                    <th className="p-6 text-right text-kenya-red font-black">Not Reg.</th>
+                    <th className="p-6 text-right">Payout (KES)</th>
+                    <th className="p-6 text-right">Perf.</th>
+                  </tr>
                 </thead>
-                <tbody class="text-sm font-bold">
-                    <tr class="border-t">
-                        <td class="p-4">SIAYA</td>
-                        <td class="p-4 text-right">44,230</td>
-                        <td class="p-4 text-right text-flag-green">PAID</td>
+                <tbody className="font-bold text-sm">
+                  {subCounties.map((sc) => (
+                    <tr key={sc.name} className="border-t border-slate-50 hover:bg-slate-50/30 transition-colors">
+                      <td className="p-6 font-black italic">{sc.name}</td>
+                      <td className="p-6 text-right font-mono text-xs">{sc.target.toLocaleString()}</td>
+                      <td className="p-6 text-right font-mono text-xs text-kenya-green">{sc.verified.toLocaleString()}</td>
+                      <td className="p-6 text-right font-mono text-xs text-kenya-red">{sc.unregistered.toLocaleString()}</td>
+                      <td className="p-6 text-right font-mono text-xs">KES {(sc.payout / 1000).toLocaleString()}K</td>
+                      <td className={`p-6 text-right`}>
+                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${sc.percent > 70 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                          {sc.percent.toFixed(1)}%
+                        </span>
+                      </td>
                     </tr>
-                    <tr class="border-t">
-                        <td class="p-4">NAIROBI</td>
-                        <td class="p-4 text-right">95,000</td>
-                        <td class="p-4 text-right text-orange-500">WAIT</td>
-                    </tr>
+                  ))}
                 </tbody>
-            </table>
-        </div>
-    </section>
+              </table>
+            </div>
+          </div>
 
-    <script>
-        function switchView(viewId) {
-            const views = ['view-login', 'view-mobilizer', 'view-subcounty', 'view-county', 'view-national'];
-            views.forEach(v => document.getElementById(v)?.classList.add('hidden'));
-            document.getElementById('view-' + viewId).classList.remove('hidden');
-            window.scrollTo(0,0);
-        }
-    </script>
-</body>
-</html>
+          <div className="bg-kenya-green p-10 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="relative z-10">
+              <h4 className="text-2xl font-black text-white italic uppercase tracking-tight">Initiate Payout Cycle</h4>
+              <p className="text-emerald-100/60 text-xs font-bold mt-1">Submit KES {(totals.payout / 1000000).toFixed(2)}M for National Admin approval & disbursement.</p>
+            </div>
+            <button className="relative z-10 bg-white text-kenya-green px-10 py-5 rounded-[2rem] font-black uppercase text-xs shadow-2xl hover:scale-105 transition-all active:scale-[0.98]">
+              Send for Approval
+            </button>
+            <div className="absolute inset-0 bg-white/5 grainy-bg pointer-events-none" />
+          </div>
+        </>
+      )}
+    </motion.section>
+  );
+}
+
+function NationalView({ onLogout, globalTarget, setGlobalTarget, countyTargets, setCountyTargets }: any) {
+  const [selectedCounty, setSelectedCounty] = useState('All Counties');
+  const [payFilter, setPayFilter] = useState<'all' | 'bank' | 'mpesa'>('all');
+  const [showTargetManager, setShowTargetManager] = useState(false);
+
+  // Stats calculation based on KES 100 per registration
+  const stats = {
+    verified: selectedCounty === 'All Counties' ? 48290 : 11130,
+    payout: selectedCounty === 'All Counties' ? (48290 * 100) / 1000000 : (11130 * 100) / 1000000,
+    efficiency: selectedCounty === 'All Counties' ? 92.4 : 74.2,
+    counties: selectedCounty === 'All Counties' ? `${KENYA_COUNTIES.length} / ${KENYA_COUNTIES.length}` : '1 Active'
+  };
+
+  const handleTargetChange = (county: string, val: string) => {
+    const num = parseInt(val) || 0;
+    setCountyTargets({ ...countyTargets, [county]: num });
+  };
+
+  const assignedTotal = Object.values(countyTargets).reduce((a: any, b: any) => a + b, 0) as number;
+
+  return (
+    <motion.section 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="pt-16 pb-12 px-6 max-w-6xl mx-auto space-y-8"
+    >
+      <header className="bg-kenya-green text-white p-10 rounded-[3.5rem] shadow-2xl flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden group grainy-bg">
+        <div className="relative z-10 flex-1">
+          <div className="flex items-center gap-2 mb-3">
+             <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">National Oversight</p>
+          </div>
+          <h2 className="text-5xl font-black italic tracking-tighter uppercase leading-none">
+            National <span className="text-emerald-300">Data</span>
+          </h2>
+          <div className="flex flex-wrap items-center gap-4 mt-6">
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] font-black text-white/60 uppercase">Filter County:</p>
+              <select 
+                value={selectedCounty}
+                onChange={(e) => setSelectedCounty(e.target.value)}
+                className="text-[10px] font-black uppercase text-kenya-green bg-white px-4 py-2 rounded-full outline-none"
+              >
+                <option value="All Counties">All Counties</option>
+                {KENYA_COUNTIES.map(c => <option key={c.code} value={c.name}>{c.name} ({c.code})</option>)}
+              </select>
+            </div>
+            <button 
+              onClick={() => setShowTargetManager(!showTargetManager)}
+              className="bg-white/20 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest hover:bg-white/30 transition-all"
+            >
+              Voter Target Manager
+            </button>
+          </div>
+        </div>
+        <button className="bg-white text-kenya-green text-[10px] font-black px-10 py-5 rounded-3xl uppercase shadow-2xl transition-all hover:scale-105 active:scale-[0.95] flex items-center gap-2 tracking-widest">
+          <Download size={16} /> Export Verified Payroll
+        </button>
+      </header>
+
+      {showTargetManager && (
+        <motion.div 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="bg-white rounded-[3rem] p-10 shadow-2xl border border-slate-100 space-y-8"
+        >
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-slate-100 pb-8">
+            <div>
+              <h3 className="text-2xl font-black text-slate-900 italic uppercase">Potential Voter Targets</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global objective based on expected voter registrations per county (KES 100/voter)</p>
+            </div>
+            <div className="bg-slate-900 p-6 rounded-3xl text-white min-w-[250px]">
+              <p className="text-[9px] font-black text-white/40 uppercase mb-2">Global Potential Voters</p>
+              <div className="flex items-center gap-2">
+                <Users className="text-kenya-green" size={20} />
+                <input 
+                  type="number" 
+                  value={globalTarget}
+                  onChange={(e) => setGlobalTarget(parseInt(e.target.value) || 0)}
+                  className="bg-transparent text-3xl font-black outline-none w-full tracking-tighter"
+                />
+              </div>
+              <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-end">
+                <div>
+                  <p className="text-[8px] font-black text-white/40 uppercase">Assigned Voters</p>
+                  <p className="text-sm font-bold text-kenya-green">{assignedTotal.toLocaleString()}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[8px] font-black text-white/40 uppercase">Remaining</p>
+                  <p className={`text-sm font-bold ${assignedTotal > globalTarget ? 'text-kenya-red' : 'text-emerald-400'}`}>
+                    {(globalTarget - assignedTotal).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto px-2 custom-scrollbar">
+            {KENYA_COUNTIES.map(c => (
+              <div key={c.code} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-kenya-green/30 transition-all">
+                <div className="flex items-center gap-3">
+                  <span className="text-[9px] font-black text-slate-300 group-hover:text-kenya-green transition-colors">{c.code}</span>
+                  <p className="text-xs font-black text-slate-700">{c.name}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[8px] font-black text-slate-400 uppercase block mb-1">Target</span>
+                  <input 
+                    type="number"
+                    value={countyTargets[c.name] || 0}
+                    onChange={(e) => handleTargetChange(c.name, e.target.value)}
+                    className="bg-white border border-slate-200 rounded-lg py-1 px-3 w-28 text-right text-xs font-mono font-bold outline-none focus:border-kenya-green"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-center">
+            <button 
+              onClick={() => setShowTargetManager(false)}
+              className="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all"
+            >
+              Save & Lock Configuration
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: 'Verified Registrations', value: stats.verified.toLocaleString(), border: 'kenya-green' },
+          { label: 'Total Payout Due', value: `KES ${stats.payout.toFixed(2)}M`, border: 'kenya-red' },
+          { label: 'Target Efficiency', value: `${stats.efficiency}%`, border: 'kenya-green' },
+          { label: 'Active Coverage', value: stats.counties, border: 'slate-300' },
+        ].map((s, idx) => (
+          <motion.div 
+            key={s.label}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: idx * 0.1 }}
+            className={`bg-white p-8 rounded-[3rem] shadow-xl text-center border-b-8 border-${s.border} group hover:bg-slate-50 transition-all`}
+          >
+            <p className="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">{s.label}</p>
+            <p className="text-4xl font-black tracking-tighter text-slate-900 mb-1">{s.value}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden">
+          <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 italic">Audit & Approval Feed</h3>
+              <p className="text-[9px] font-bold text-slate-400 uppercase">{selectedCounty} Filter Applied</p>
+            </div>
+            <div className="flex gap-2">
+              <button className="bg-kenya-green text-white text-[9px] font-black px-6 py-3 rounded-xl uppercase shadow-lg shadow-kenya-green/20">Batch Approve</button>
+            </div>
+          </div>
+          <div className="overflow-x-auto p-4">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 text-[10px] font-black uppercase text-slate-400">
+                <tr>
+                  <th className="p-6">Mobilizer</th>
+                  <th className="p-6">County</th>
+                  <th className="p-6 text-center text-kenya-green">Verified</th>
+                  <th className="p-6 text-right">KES Amount</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm font-bold">
+                {[
+                  { name: 'John Mutua', region: 'Machakos', ver: 112, pay: 112 * 100 },
+                  { name: 'Sarah Wanjiku', region: 'Nairobi', ver: 185, pay: 185 * 100 },
+                  { name: 'Kevin Otieno', region: 'Siaya', ver: 410, pay: 410 * 100 }
+                ].filter(m => selectedCounty === 'All Counties' || m.region === selectedCounty).map((m) => (
+                  <tr key={m.name} className="border-t border-slate-50 hover:bg-slate-50/50 transition-colors">
+                    <td className="p-6 font-black italic">{m.name}</td>
+                    <td className="p-6 text-slate-500 font-medium">{m.region}</td>
+                    <td className="p-6 text-center font-black text-kenya-green font-mono">{m.ver}</td>
+                    <td className="p-6 text-right font-black uppercase tracking-tighter">KES {m.pay.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 grainy-bg p-8 rounded-[3rem] shadow-2xl flex flex-col justify-between border-t-8 border-kenya-red">
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-2">
+               <Wallet className="text-emerald-400" size={20} />
+               <h4 className="text-white text-lg font-black italic uppercase tracking-tight">Payment Hub</h4>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Regional/County Hub</p>
+              <select 
+                value={selectedCounty}
+                onChange={(e) => setSelectedCounty(e.target.value)}
+                className="w-full p-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold outline-none"
+              >
+                <option value="All Counties" className="bg-slate-900">Filter: All Counties</option>
+                {KENYA_COUNTIES.map(c => <option key={c.code} value={c.name} className="bg-slate-900">{c.name} ({c.code})</option>)}
+              </select>
+              
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-4">Infrastructure</p>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { id: 'all', label: 'All Clusters' },
+                  { id: 'mpesa', label: 'M-Pesa B2C Sync' },
+                  { id: 'bank', label: 'Commercial Bank API' }
+                ].map(opt => (
+                  <button 
+                    key={opt.id}
+                    onClick={() => setPayFilter(opt.id as any)}
+                    className={`text-left p-4 rounded-2xl text-[10px] font-black uppercase transition-all ${payFilter === opt.id ? 'bg-kenya-green text-white shadow-xl' : 'bg-white/5 text-white/50 border border-white/5 hover:bg-white/10'}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 space-y-4">
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+               <p className="text-[9px] font-black text-white/30 uppercase mb-1">Estimated Disbursement</p>
+               <p className="text-xl font-mono font-black text-white italic">KES {stats.payout.toFixed(3)}M</p>
+            </div>
+            <button className="w-full bg-kenya-red text-white p-6 rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-2xl shadow-kenya-red/40 hover:scale-[1.02] transition-all">
+              Authorize Global Payout
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
